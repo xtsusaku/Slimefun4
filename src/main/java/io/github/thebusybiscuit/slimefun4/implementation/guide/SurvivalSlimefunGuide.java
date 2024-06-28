@@ -166,7 +166,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
         menu.addMenuClickHandler(46, (pl, slot, item, action) -> {
             int next = page - 1;
 
-            if (next != page && next > 0) {
+            if (next > 0) {
                 openMainMenu(profile, next);
             }
 
@@ -177,7 +177,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
         menu.addMenuClickHandler(52, (pl, slot, item, action) -> {
             int next = page + 1;
 
-            if (next != page && next <= pages) {
+            if (next <= pages) {
                 openMainMenu(profile, next);
             }
 
