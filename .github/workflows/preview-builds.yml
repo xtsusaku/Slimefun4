@@ -2,7 +2,7 @@ name: Preview builds
 
 on:
   workflow_run:
-    workflows: ["Pull Request"]
+    workflows: ["Run Tests"]
     types:
       - completed
 
