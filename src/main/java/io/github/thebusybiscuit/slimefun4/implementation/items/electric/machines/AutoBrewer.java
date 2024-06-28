@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -10,7 +11,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 
 import io.github.bakedlibs.dough.inventory.InvUtils;
@@ -34,25 +34,56 @@ public class AutoBrewer extends AContainer implements NotHopperable {
 
     private static final Map<Material, PotionType> potionRecipes = new EnumMap<>(Material.class);
     private static final Map<PotionType, PotionType> fermentations = new EnumMap<>(PotionType.class);
+    private static final Map<PotionType, PotionType> extendations = new EnumMap<>(PotionType.class);
+    private static final Map<PotionType, PotionType> upgrading = new EnumMap<>(PotionType.class);
 
     static {
-        potionRecipes.put(Material.SUGAR, PotionType.SPEED);
-        potionRecipes.put(Material.RABBIT_FOOT, PotionType.JUMP);
+        potionRecipes.put(Material.SUGAR, PotionType.SWIFTNESS);
+        potionRecipes.put(Material.RABBIT_FOOT, PotionType.LEAPING);
         potionRecipes.put(Material.BLAZE_POWDER, PotionType.STRENGTH);
-        potionRecipes.put(Material.GLISTERING_MELON_SLICE, PotionType.INSTANT_HEAL);
+        potionRecipes.put(Material.GLISTERING_MELON_SLICE, PotionType.HEALING);
         potionRecipes.put(Material.SPIDER_EYE, PotionType.POISON);
-        potionRecipes.put(Material.GHAST_TEAR, PotionType.REGEN);
+        potionRecipes.put(Material.GHAST_TEAR, PotionType.REGENERATION);
         potionRecipes.put(Material.MAGMA_CREAM, PotionType.FIRE_RESISTANCE);
         potionRecipes.put(Material.PUFFERFISH, PotionType.WATER_BREATHING);
         potionRecipes.put(Material.GOLDEN_CARROT, PotionType.NIGHT_VISION);
         potionRecipes.put(Material.TURTLE_HELMET, PotionType.TURTLE_MASTER);
         potionRecipes.put(Material.PHANTOM_MEMBRANE, PotionType.SLOW_FALLING);
 
-        fermentations.put(PotionType.SPEED, PotionType.SLOWNESS);
-        fermentations.put(PotionType.JUMP, PotionType.SLOWNESS);
-        fermentations.put(PotionType.INSTANT_HEAL, PotionType.INSTANT_DAMAGE);
-        fermentations.put(PotionType.POISON, PotionType.INSTANT_DAMAGE);
+        fermentations.put(PotionType.SWIFTNESS, PotionType.SLOWNESS);
+        fermentations.put(PotionType.STRONG_SWIFTNESS, PotionType.STRONG_SLOWNESS);
+        fermentations.put(PotionType.LEAPING, PotionType.SLOWNESS);
+        fermentations.put(PotionType.STRONG_LEAPING, PotionType.STRONG_SLOWNESS);
+        fermentations.put(PotionType.HEALING, PotionType.HARMING);
+        fermentations.put(PotionType.STRONG_HEALING, PotionType.STRONG_HARMING);
+        fermentations.put(PotionType.POISON, PotionType.HARMING);
+        fermentations.put(PotionType.STRONG_POISON, PotionType.STRONG_HARMING);
         fermentations.put(PotionType.NIGHT_VISION, PotionType.INVISIBILITY);
+        fermentations.put(PotionType.LONG_NIGHT_VISION, PotionType.LONG_INVISIBILITY);
+
+        extendations.put(PotionType.SWIFTNESS, PotionType.LONG_SWIFTNESS);
+        extendations.put(PotionType.SLOWNESS, PotionType.LONG_SLOWNESS);
+        extendations.put(PotionType.NIGHT_VISION, PotionType.LONG_NIGHT_VISION);
+        extendations.put(PotionType.INVISIBILITY, PotionType.LONG_INVISIBILITY);
+        extendations.put(PotionType.LEAPING, PotionType.LONG_LEAPING);
+        extendations.put(PotionType.POISON, PotionType.LONG_POISON);
+        extendations.put(PotionType.FIRE_RESISTANCE, PotionType.LONG_FIRE_RESISTANCE);
+        extendations.put(PotionType.REGENERATION, PotionType.LONG_REGENERATION);
+        extendations.put(PotionType.SLOW_FALLING, PotionType.LONG_SLOW_FALLING);
+        extendations.put(PotionType.STRENGTH, PotionType.LONG_STRENGTH);
+        extendations.put(PotionType.TURTLE_MASTER, PotionType.LONG_TURTLE_MASTER);
+        extendations.put(PotionType.WATER_BREATHING, PotionType.LONG_WATER_BREATHING);
+        extendations.put(PotionType.WEAKNESS, PotionType.LONG_WEAKNESS);
+
+        upgrading.put(PotionType.HARMING, PotionType.STRONG_HARMING);
+        upgrading.put(PotionType.HEALING, PotionType.STRONG_HEALING);
+        upgrading.put(PotionType.LEAPING, PotionType.STRONG_LEAPING);
+        upgrading.put(PotionType.POISON, PotionType.STRONG_POISON);
+        upgrading.put(PotionType.SLOWNESS, PotionType.STRONG_SLOWNESS);
+        upgrading.put(PotionType.SWIFTNESS, PotionType.STRONG_SWIFTNESS);
+        upgrading.put(PotionType.REGENERATION, PotionType.STRONG_REGENERATION);
+        upgrading.put(PotionType.TURTLE_MASTER, PotionType.STRONG_TURTLE_MASTER);
+        upgrading.put(PotionType.STRENGTH, PotionType.STRONG_STRENGTH);
     }
 
     @ParametersAreNonnullByDefault
@@ -104,41 +135,46 @@ public class AutoBrewer extends AContainer implements NotHopperable {
 
     @ParametersAreNonnullByDefault
     private @Nullable ItemStack brew(Material input, Material potionType, PotionMeta potion) {
-        PotionData data = potion.getBasePotionData();
+        PotionType type = potion.getBasePotionType();
 
-        PotionType type = data.getType();
         if (type == PotionType.WATER) {
             if (input == Material.FERMENTED_SPIDER_EYE) {
-                potion.setBasePotionData(new PotionData(PotionType.WEAKNESS, false, false));
+                potion.setBasePotionType(PotionType.WEAKNESS);
                 return new ItemStack(potionType);
             } else if (input == Material.NETHER_WART) {
-                potion.setBasePotionData(new PotionData(PotionType.AWKWARD, false, false));
+                potion.setBasePotionType(PotionType.AWKWARD);
                 return new ItemStack(potionType);
             } else if (potionType == Material.POTION && input == Material.GUNPOWDER) {
                 return new ItemStack(Material.SPLASH_POTION);
             } else if (potionType == Material.SPLASH_POTION && input == Material.DRAGON_BREATH) {
                 return new ItemStack(Material.LINGERING_POTION);
             }
-        } else if (input == Material.FERMENTED_SPIDER_EYE) {
+        } else if (input == Material.FERMENTED_SPIDER_EYE && type != null) {
             PotionType fermented = fermentations.get(type);
 
             if (fermented != null) {
-                potion.setBasePotionData(new PotionData(fermented, data.isExtended(), data.isUpgraded()));
+                potion.setBasePotionType(fermented);
                 return new ItemStack(potionType);
             }
-        } else if (input == Material.REDSTONE && type.isExtendable() && !data.isUpgraded()) {
-            // Fixes #3390 - Potions can only be either extended or upgraded. Not both.
-            potion.setBasePotionData(new PotionData(type, true, false));
-            return new ItemStack(potionType);
-        } else if (input == Material.GLOWSTONE_DUST && type.isUpgradeable() && !data.isExtended()) {
-            // Fixes #3390 - Potions can only be either extended or upgraded. Not both.
-            potion.setBasePotionData(new PotionData(type, false, true));
-            return new ItemStack(potionType);
+        } else if (input == Material.REDSTONE && type != null && type.isExtendable() && !upgrading.containsValue(type)) {
+            PotionType extended = extendations.get(type);
+
+            if (extended != null) {
+                potion.setBasePotionType(extended);
+                return new ItemStack(potionType);
+            }
+        } else if (input == Material.GLOWSTONE_DUST && type != null && type.isUpgradeable() && !extendations.containsValue(type)) {
+            PotionType upgraded = upgrading.get(type);
+
+            if (upgraded != null) {
+                potion.setBasePotionType(upgraded);
+                return new ItemStack(potionType);
+            }
         } else if (type == PotionType.AWKWARD) {
             PotionType potionRecipe = potionRecipes.get(input);
 
             if (potionRecipe != null) {
-                potion.setBasePotionData(new PotionData(potionRecipe, false, false));
+                potion.setBasePotionType(potionRecipe);
                 return new ItemStack(potionType);
             }
         }
